@@ -1,0 +1,20 @@
+[
+  "2",
+  "{$seq_num}",
+  "hub:{$hub_id}",
+  "phx_join",
+  {
+    "profile": {
+      "avatarId": "gVgSB4W",
+      "displayName": "{$monitor_name}"
+    },
+    "push_subscription_endpoint": null,
+    "auth_token": null,
+    "perms_token": null,
+    "context": {
+      "mobile": false,
+      "embed": false
+    },
+    "hub_invite_id": null
+  }
+]

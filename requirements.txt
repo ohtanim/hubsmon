@@ -1,0 +1,7 @@
+asyncio >= 3.4.3
+websockets >= 8.1
+argparse
+requests >= 2.22.0
+lxml
+bs4
+
