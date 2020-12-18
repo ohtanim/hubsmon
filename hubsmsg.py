@@ -109,51 +109,6 @@ def format_close(code: int, reason: str) -> str:
 
     return result
 
-def process_meta(hub_id: str, meta: dict, event_type: str) -> None:
-    """
-    Returns device type texts from the context.
-
-    Args:
-        meta: meta element
-
-    Returns:
-        list: a list of device type texts
-    """
-
-    dt_now = datetime.datetime.now()
-    dt_now_str = dt_now.strftime('%Y-%m-%d %H:%M:%S')
-
-    device_types = []
-    is_hmd = False
-    is_mobile = False
-    if "hmd" in meta['context']:
-        if meta['context']['hmd'] is True:
-            is_hmd = True
-            device_types.append('hmd')
-    if "mobile" in meta['context']:
-        if meta['context']['mobile'] is True:
-            is_mobile = True
-            device_types.append('mobile')
-
-    print(dt_now_str,
-          hub_id,
-          meta['profile']['displayName'],
-          device_types,
-          event_type,
-          meta['presence'])
-
-    row = []
-    row.append(dt_now_str)
-    row.append(meta['profile']['displayName'])
-    row.append(event_type)
-    row.append(meta['presence'])
-    row.append(is_hmd)
-    row.append(is_mobile)
-    with open(hub_id + '.csv', 'a') as csv_file:
-        writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-        writer.writerow(row)
-        csv_file.flush()
-
 def process_message(hub_id: str, message: str) -> bool:
     """
     Process a message sent from WebSocket server.
@@ -163,49 +118,13 @@ def process_message(hub_id: str, message: str) -> bool:
         message: a message to be processed.
     """
     msg_as_json = json.loads(message)
-    if msg_as_json[3] == 'presence_state':
-        for key in msg_as_json[4]:
-            for meta in msg_as_json[4][key]['metas']:
-                process_meta(hub_id, meta, 'in')
-
-    elif msg_as_json[3] == 'presence_diff':
-        #print(json.dumps(msg_as_json[4], indent=2))
-        for key in msg_as_json[4]['joins']:
-            for meta in msg_as_json[4]['joins'][key]['metas']:
-                process_meta(hub_id, meta, 'joins')
-
-        for key in msg_as_json[4]['leaves']:
-            for meta in msg_as_json[4]['leaves'][key]['metas']:
-                process_meta(hub_id, meta, 'leaves')
-
-    elif msg_as_json[3] == 'phx_reply':
+    if msg_as_json[3] == 'phx_reply':
         status = msg_as_json[4]['status']
         if status == 'error':
             print(json.dumps(msg_as_json[4]))
             return False
 
     return True
-
-def init_csv(hubs_room: Room) -> None:
-    """
-    Creates new csv file with csv header if not exists.
-
-    Args:
-        hubs_room(Room): room obj
-    """
-    filename = hubs_room.get_hub_id() + '.csv'
-    if os.path.exists(filename) is False:
-        with open(filename, 'w') as csv_file:
-            writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
-            row = []
-            row.append('Timestamp')
-            row.append('Display name')
-            row.append('Event type')
-            row.append('Room or lobby')
-            row.append('Access from HMD')
-            row.append('Access from Mobile')
-            writer.writerow(row)
-            csv_file.flush()
 
 async def run_client(hubs_room: Room,
                      loop: asyncio.AbstractEventLoop,
@@ -221,9 +140,6 @@ async def run_client(hubs_room: Room,
         inputs: queue for user input
         stop: stop condition
     """
-    # initialize csv file if necessary
-    init_csv(hubs_room)
-
     reticulum_io_url = "wss://" + hubs_room.get_reticulum_server() + "/socket/websocket?vsn=2.0.0"
     try:
         websocket = await websockets.connect(reticulum_io_url)
